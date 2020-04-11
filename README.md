@@ -13,4 +13,5 @@ This is a place to share my experiments with different applications.  Repository
   * A sample SFDC project to compare fuel prices between several Love's Travel Stops locations, and nearby competitors, prior to joining the company in 2017.  The developer org no longer exists; the documentation is included to show how I organize and work Salesforce projects.
 
 
+***
 Content created and maintained by Michelle Boyd, info@mdwboyd.com.  Last updated 2020-04-11
