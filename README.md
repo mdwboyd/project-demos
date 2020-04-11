@@ -1,17 +1,16 @@
 # project-demos
 
-A place for me to put my application expermentation.  Mostly useful to show off things I can do
+This is a place to share my experiments with different applications.  Repository is broken out into folders per platform
 
-
-Repository is broken out into folders per platform
-
-**Oracle**
+[**Oracle**](oracle)
 * Demo Survey
- * A little survey based on the questions from the Bridge of Death, playing on the New Mexico state question "Red or Green?".
- Green are best by the way  :)
+  * A little survey built in Oracle Apex, with custom PL/SQL to handle survey questions, responses, and reporting.  Survey is based on the questions from Monty Python and the Holy Grail, and including the New Mexico state question ["Red or Green?"](https://www.sos.state.nm.us/about-new-mexico/state-question/).
 
-**Salesforce**
-* 
+    Green chiles are best by the way  :)
+
+[**Salesforce**](salesforce)
+* Love's Demo
+  * A sample SFDC project to compare fuel prices between several Love's Travel Stops locations, and nearby competitors, prior to joining the company in 2017.  The developer org no longer exists; the documentation is included to show how I organize and work Salesforce projects.
 
 
 Content created and maintained by Michelle Boyd, info@mdwboyd.com.  Last updated 2020-04-11
