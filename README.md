@@ -4,9 +4,9 @@ This is a place to share my experiments with different applications.  Repository
 
 [**Oracle**](oracle)
 * Demo Survey
-  * A little survey built in Oracle Apex, with custom PL/SQL to handle survey questions, responses, and reporting.  Survey is based on the questions from Monty Python and the Holy Grail, and including the New Mexico state question ["Red or Green?"](https://www.sos.state.nm.us/about-new-mexico/state-question/).
-
-    Green chiles are best by the way  :)
+  * A little survey built in Oracle Apex, with custom PL/SQL to handle survey questions, responses, and reporting.  Survey is based on the questions from Monty Python and the Holy Grail, and including the New Mexico state question ["Red or Green?"](https://www.sos.state.nm.us/about-new-mexico/state-question/).  Green chiles are best by the way  :)
+    
+    Click to view the finished product: [apex.mdwboyd.com](https://apex.mdwboyd.com)
 
 [**Salesforce**](salesforce)
 * Love's Demo
