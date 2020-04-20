@@ -1,0 +1,355 @@
+/*
+File Contents and starting line numbers
+  Tables.........line 10
+  Views..........line 117
+  Triggers.......line 144
+  Packages.......line 204
+  Page SQL.......line 321
+*/
+
+-- Start Tables
+
+CREATE TABLE SV_QUESTIONS (	
+  QU_ID		NUMBER(10,0)	GENERATED ALWAYS AS IDENTITY,
+	Q_TEXT		VARCHAR2(50)	NOT NULL,
+	Q_ORDER		NUMBER(3,0)		NOT NULL,
+	Q_TYPE		VARCHAR2(15)	NOT NULL,
+	START_DATE	DATE,
+	END_DATE	DATE,
+	IS_ACTIVE	NUMBER(1,0)		NOT NULL,
+	IS_REPORTABLE	NUMBER(1,0)	NOT NULL,
+	CREATED_BY	NUMBER(18,0)	NOT NULL,
+	CREATED_ON	DATE			NOT NULL,
+	UPDATED_BY	NUMBER(18,0),
+	UPDATED_ON	DATE,
+	CONSTRAINT PK_QU_ID PRIMARY KEY (QU_ID)
+);
+/
+ALTER TABLE SV_QUESTIONS ADD (
+    CONSTRAINT CK_QU_IS_ACTIVE CHECK (IS_ACTIVE IN (1,0)),
+	CONSTRAINT CK_QU_IS_REPORTABLE CHECK (IS_REPORTABLE IN (1,0))
+);
+/
+COMMENT ON COLUMN SV_QUESTIONS.Q_TEXT IS 'Question text';
+COMMENT ON COLUMN SV_QUESTIONS.Q_ORDER IS 'Question order';
+COMMENT ON COLUMN SV_QUESTIONS.Q_TYPE IS 'Type of question';
+COMMENT ON COLUMN SV_QUESTIONS.START_DATE IS 'Datetime the question was set as active';
+COMMENT ON COLUMN SV_QUESTIONS.END_DATE IS 'Datetime the question was set as inactive';
+COMMENT ON COLUMN SV_QUESTIONS.IS_ACTIVE IS 'Indicates if question will be included in survey';
+COMMENT ON COLUMN SV_QUESTIONS.IS_REPORTABLE IS 'Indicates if question response data can be included in reports';
+COMMENT ON COLUMN SV_QUESTIONS.CREATED_BY IS 'Id of user who created the record';
+COMMENT ON COLUMN SV_QUESTIONS.CREATED_ON IS 'Datetime the record was created';
+COMMENT ON COLUMN SV_QUESTIONS.UPDATED_BY IS 'Id of user who updated the record';
+COMMENT ON COLUMN SV_QUESTIONS.UPDATED_ON IS 'Datetime the record was updated';
+/	
+
+
+CREATE TABLE SV_QUESTION_HISTORY (	
+  QH_ID			NUMBER(10,0)	GENERATED ALWAYS AS IDENTITY,
+	QU_ID			NUMBER(10,0)	NOT NULL,
+	Q_TEXT			VARCHAR2(100)	NOT NULL,
+	Q_ORDER			NUMBER(3,0)		NOT NULL,
+	START_DATE		DATE,		
+	END_DATE		DATE,
+	IS_ACTIVE		NUMBER(1,0)		NOT NULL,		
+	IS_REPORTABLE	NUMBER(1,0)		NOT NULL,
+	CREATED_BY		NUMBER(18,0)	NOT NULL,
+	CREATED_ON		DATE			NOT NULL,	
+	CONSTRAINT PK_QH_ID PRIMARY KEY (QH_ID),
+	CONSTRAINT FK_QH_QU_ID FOREIGN KEY (QU_ID) REFERENCES SV_QUESTIONS(QU_ID)
+);
+/
+ALTER TABLE SV_QUESTION_HISTORY ADD 
+(	CONSTRAINT CK_QH_IS_ACTIVE CHECK (IS_ACTIVE IN (1,0)),
+	CONSTRAINT CK_QH_IS_REPORTABLE CHECK (IS_REPORTABLE IN (1,0))
+);
+/
+CREATE INDEX QH_QU_IDX ON SV_QUESTION_HISTORY (QU_ID);
+/
+COMMENT ON COLUMN SV_QUESTION_HISTORY.QU_ID IS 'Related to SV_QUESTIONS.ID value';
+COMMENT ON COLUMN SV_QUESTION_HISTORY.Q_TEXT IS 'Question text when the question change occured';
+COMMENT ON COLUMN SV_QUESTION_HISTORY.Q_ORDER IS 'Question order when the question change occurred';
+COMMENT ON COLUMN SV_QUESTION_HISTORY.START_DATE IS 'Start Date value when the question change occured';
+COMMENT ON COLUMN SV_QUESTION_HISTORY.END_DATE IS 'End Date value when the question change occured';
+COMMENT ON COLUMN SV_QUESTION_HISTORY.IS_ACTIVE IS 'Indicates if question was included in survey when the question change occured';
+COMMENT ON COLUMN SV_QUESTION_HISTORY.IS_REPORTABLE IS 'Indicates if question response data was included in reports when the question change occured';
+COMMENT ON COLUMN SV_QUESTION_HISTORY.CREATED_BY IS 'Id of user who initiated the question change';
+COMMENT ON COLUMN SV_QUESTION_HISTORY.CREATED_ON IS 'Datetime the question change was initiated';
+/
+
+CREATE TABLE SV_RESPONSES (	
+  RS_ID		NUMBER(10,0)	GENERATED ALWAYS AS IDENTITY,
+	CREATED_ON	DATE			NOT NULL,	
+	CONSTRAINT PK_RS_ID PRIMARY KEY (RS_ID)
+);
+/
+COMMENT ON COLUMN SV_RESPONSES.CREATED_ON IS 'Datetime the response was submitted';
+/
+
+CREATE TABLE SV_RESPONSE_VALUES (	
+  RV_ID		NUMBER(10,0)	GENERATED ALWAYS AS IDENTITY,
+	RS_ID		NUMBER(10,0)	NOT NULL,
+	QU_ID		NUMBER(10,0)	NOT NULL,
+	Q_VALUE		VARCHAR2(100),	
+	CONSTRAINT PK_RV_ID PRIMARY KEY (RV_ID),
+	CONSTRAINT FK_RV_QU_ID FOREIGN KEY (QU_ID) REFERENCES SV_QUESTIONS(QU_ID),
+	CONSTRAINT FK_RV_RS_ID FOREIGN KEY (RS_ID) REFERENCES SV_RESPONSES(RS_ID)
+);
+/
+CREATE INDEX RV_RS_IDX ON SV_RESPONSE_VALUES (RS_ID);
+CREATE INDEX RV_QU_IDX ON SV_RESPONSE_VALUES (QU_ID);
+/
+COMMENT ON COLUMN SV_RESPONSE_VALUES.RS_ID IS 'Related to SV_RESPONSES.ID';
+COMMENT ON COLUMN SV_RESPONSE_VALUES.QU_ID IS 'Related to SV_QUESTIONS.ID';
+COMMENT ON COLUMN SV_RESPONSE_VALUES.Q_VALUE IS 'Question response text';
+/
+
+CREATE TABLE SV_LOGS (
+	LG_ID		NUMBER(10,0)	GENERATED ALWAYS AS IDENTITY,
+	LG_BODY		VARCHAR2(1000)	NOT NULL,
+	CREATED_ON	DATE		    NOT NULL,
+	CONSTRAINT PK_LG_ID PRIMARY KEY (LG_ID)
+);
+/
+
+-- End Tables
+
+-- Start Views
+
+-- Survey Responses view, for survey app result reports
+CREATE OR REPLACE VIEW SV_RESPONSES_VIEW AS
+	SELECT rs.RS_ID RESPONSE_ID
+		,rs.CREATED_ON
+		,rv.QU_ID QUESTION_ID
+		,rv.Q_VALUE RESPONSE_VALUE
+		,qu.Q_TEXT QUESTION_TEXT
+    ,qu.IS_REPORTABLE REPORTABLE
+	FROM SV_RESPONSES rs
+		,SV_RESPONSE_VALUES rv
+		,SV_QUESTIONS qu
+	WHERE rs.RS_ID = rv.RS_ID
+		AND rv.QU_ID = qu.QU_ID;
+
+-- Survey questions view
+CREATE OR REPLACE VIEW SV_QUESTIONS_VIEW AS
+	SELECT qu.QU_ID QUESTION_ID
+		,qu.Q_TEXT QUESTION_TEXT
+	FROM SV_QUESTIONS qu
+	WHERE qu.IS_ACTIVE = 1
+	ORDER BY qu.Q_ORDER;
+/
+
+-- End Views
+
+-- Start Triggers
+
+CREATE OR REPLACE TRIGGER SV_QUESTIONS_TRG
+FOR INSERT OR UPDATE OR DELETE ON SV_QUESTIONS
+COMPOUND TRIGGER
+
+BEFORE EACH ROW IS
+  BEGIN
+    CASE
+      WHEN INSERTING THEN
+        IF :new.IS_ACTIVE = 1 THEN
+          :new.START_DATE := SYSDATE;
+        END IF; 
+        :new.CREATED_ON := SYSDATE;
+        :new.CREATED_BY := v('APP_USER');
+      
+      WHEN UPDATING THEN
+        IF :new.IS_ACTIVE = 0 AND :old.IS_ACTIVE = 1 THEN
+          :new.END_DATE := SYSDATE;
+        ELSIF :new.IS_ACTIVE = 1 AND :old.IS_ACTIVE = 0 THEN
+          :new.END_DATE := null;
+        END IF;
+        :new.UPDATED_ON := SYSDATE;
+        :new.UPDATED_BY := v('APP_USER');
+        
+        -- Insert old record into SV_Question_History
+        sv_pkg.sv_qh_insert(
+           :old.QU_ID
+          ,:old.Q_TEXT
+          ,:old.Q_ORDER
+          ,:old.START_DATE
+          ,:old.END_DATE
+          ,:old.IS_ACTIVE
+          ,:old.IS_REPORTABLE
+          ,v('APP_USER')
+          ,SYSDATE            
+        );
+    END CASE;
+END BEFORE EACH ROW;
+
+AFTER EACH ROW IS
+  BEGIN
+    -- Insert new record into SV_Question_History
+    sv_pkg.sv_qh_insert(
+       :new.QU_ID
+      ,:new.Q_TEXT
+      ,:new.Q_ORDER
+      ,:new.START_DATE
+      ,:new.END_DATE
+      ,:new.IS_ACTIVE
+      ,:new.IS_REPORTABLE
+      ,:new.CREATED_BY
+      ,:new.CREATED_ON          
+    );
+END AFTER EACH ROW;
+END SV_QUESTIONS_TRG;
+/
+
+-- End Triggers
+
+-- Start Packages
+
+CREATE OR REPLACE PACKAGE sv_pkg AUTHID DEFINER AS
+
+  FUNCTION sv_item_label (p_item_name VARCHAR2) RETURN VARCHAR2;		
+  PROCEDURE sv_page_process;
+  PROCEDURE sv_qh_insert (
+    p_QU_ID             sv_question_history.QU_ID%TYPE
+   ,p_Q_TEXT            sv_question_history.Q_TEXT%TYPE
+   ,p_Q_ORDER           sv_question_history.Q_ORDER%TYPE
+   ,p_START_DATE        sv_question_history.START_DATE%TYPE
+   ,p_END_DATE          sv_question_history.END_DATE%TYPE
+   ,p_IS_ACTIVE         sv_question_history.IS_ACTIVE %TYPE
+   ,p_IS_REPORTABLE     sv_question_history.IS_REPORTABLE%TYPE
+   ,p_CREATED_BY        sv_question_history.CREATED_BY%TYPE
+   ,p_CREATED_ON        sv_question_history.CREATED_ON%TYPE  
+  );
+
+END sv_pkg;
+/
+
+CREATE OR REPLACE PACKAGE BODY sv_pkg AS
+
+FUNCTION sv_item_label (p_item_name VARCHAR2) RETURN VARCHAR2
+  IS
+    v_item_label sv_questions.Q_TEXT%TYPE;
+    l_item_num   NUMBER;
+  
+  BEGIN
+    -- Get QU_ID to use from the page item's label
+    l_item_num := instr(p_item_name,'Q') + 1;
+  
+    SELECT Q_TEXT
+    INTO v_item_label
+    FROM SV_QUESTIONS
+    WHERE QU_ID = substr(p_item_name, l_item_num);
+    RETURN v_item_label;
+  
+  EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+    v_item_label := p_item_name;
+	
+  RETURN v_item_label;
+END sv_item_label;
+
+PROCEDURE sv_page_process
+  IS
+    p           VARCHAR2(10) := 'P' || v('APP_PAGE_ID');
+	  l_item_num  NUMBER       := length(p || '_Q') + 1;
+	
+    l_qu_id     sv_response_values.QU_ID%TYPE;
+    l_rs_id     sv_responses.RS_ID%TYPE;
+    p_item      sv_response_values.Q_VALUE%TYPE;
+  
+    cursor c_item_ids is
+      SELECT substr(ITEM_NAME,l_item_num) Item_Id
+      FROM APEX_APPLICATION_PAGE_ITEMS
+      WHERE APPLICATION_ID = v('APP_ID')
+        and PAGE_ID = v('APP_PAGE_ID')
+        and ITEM_NAME like p || '_Q%'
+      ORDER BY DISPLAY_SEQUENCE;
+  
+  BEGIN
+    INSERT INTO sv_responses (CREATED_ON) VALUES (SYSDATE)
+    RETURNING rs_id INTO l_rs_id;  
+    
+    OPEN c_item_ids;
+    LOOP
+      FETCH c_item_ids INTO l_qu_id;
+      EXIT WHEN (c_item_ids%NOTFOUND);
+      p_item := v(p || '_Q' || l_qu_id);
+      INSERT INTO sv_response_values (rs_id,qu_id,q_value) VALUES (l_rs_id,l_qu_id,p_item);
+    END LOOP;
+    CLOSE c_item_ids;
+END sv_page_process;
+
+PROCEDURE sv_qh_insert (
+           p_QU_ID             sv_question_history.QU_ID%TYPE
+          ,p_Q_TEXT            sv_question_history.Q_TEXT%TYPE
+          ,p_Q_ORDER           sv_question_history.Q_ORDER%TYPE
+          ,p_START_DATE        sv_question_history.START_DATE%TYPE
+          ,p_END_DATE          sv_question_history.END_DATE%TYPE
+          ,p_IS_ACTIVE         sv_question_history.IS_ACTIVE %TYPE
+          ,p_IS_REPORTABLE     sv_question_history.IS_REPORTABLE%TYPE
+          ,p_CREATED_BY        sv_question_history.CREATED_BY%TYPE
+          ,p_CREATED_ON        sv_question_history.CREATED_ON%TYPE
+)
+  IS
+  BEGIN
+      INSERT INTO SV_QUESTION_HISTORY (
+           QU_ID
+          ,Q_TEXT
+          ,Q_ORDER
+          ,START_DATE
+          ,END_DATE
+          ,IS_ACTIVE 
+          ,IS_REPORTABLE
+          ,CREATED_BY
+          ,CREATED_ON
+      ) VALUES (
+           p_QU_ID 
+          ,p_Q_TEXT  	
+          ,p_Q_ORDER  
+          ,p_START_DATE  
+          ,p_END_DATE  
+          ,p_IS_ACTIVE 
+          ,p_IS_REPORTABLE
+          ,p_CREATED_BY
+          ,p_CREATED_ON     
+      );
+END sv_qh_insert;
+
+END sv_pkg;
+/
+
+-- End Packages
+
+-- Start page SQL
+
+-- Survey response count.  Used on Survey Results page
+SELECT QUESTION_ID
+	  ,QUESTION_TEXT
+	  ,RESPONSE_VALUE
+	  ,count(QUESTION_TEXT) RESPONSE_CNT
+FROM SV_RESPONSES_VIEW
+WHERE REPORTABLE = 1
+GROUP BY QUESTION_ID, QUESTION_TEXT,RESPONSE_VALUE;
+
+-- List of rows in SV_QUESTIONS.  Used on Question Management page
+SELECT QU_ID "Question ID"
+  ,Q_TEXT "Question Text"
+  ,Q_ORDER "Sort Order"
+  ,IS_ACTIVE "Active"
+  ,IS_REPORTABLE "Reportable"
+FROM SV_QUESTIONS;
+
+-- Survey response values.  Used on the Reports page
+SELECT * 
+FROM (
+  SELECT RESPONSE_ID
+        ,CREATED_ON AS SURVEY_DATE
+        ,QUESTION_TEXT
+        ,RESPONSE_VALUE
+  FROM SV_RESPONSES_VIEW
+)
+PIVOT(
+  MAX(RESPONSE_VALUE)
+  FOR (QUESTION_TEXT) IN ('What is your name?','What is your quest?','What is your favorite color?')
+)
+ORDER BY SURVEY_DATE, RESPONSE_ID
+
+-- End page SQL
