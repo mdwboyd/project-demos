@@ -1,6 +1,6 @@
 # project-demos
 
-This is a place to share my experiments with different applications.  Repository is broken out into folders per platform
+This is a place to share my experiments with different applications.  Repository is broken out into folders per platform/stack.
 
 <details>
 <summary><b>Oracle</b></summary>
@@ -20,4 +20,4 @@ This is a place to share my experiments with different applications.  Repository
 
 
 ***
-Content created and maintained by Michelle Boyd, info@mdwboyd.com.  Last updated 2020-04-20
+Content created and maintained by Michelle Boyd, info@mdwboyd.com.  Last updated 2020-04-21
